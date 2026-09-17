@@ -38,10 +38,10 @@ class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -
             val candles = response.toDomain(now)
             if (candles.size < MIN_CANDLES) MarketResult.Failure(FailureKind.INSUFFICIENT_DATA, "Histori candle belum mencukupi")
             else MarketResult.Success(candles, ticker, now, DataSource.INDODAX_CANDLES)
-        } catch (e: CancellationException) {
-            throw e
         } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
             MarketResult.Failure(FailureKind.TIMEOUT, "Permintaan terlalu lama")
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: IOException) {
             MarketResult.Failure(FailureKind.NETWORK, "Tidak dapat terhubung ke Indodax")
         } catch (e: HttpException) {

@@ -42,7 +42,10 @@ fun MainScreen(vm: SignalViewModel) {
             Button(onClick = vm::analyze, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
                 if (state.loading) {
                     val loadingDescription = stringResource(R.string.loading)
-                    CircularProgressIndicator(Modifier.size(18.dp).semantics { contentDescription = loadingDescription }, strokeWidth = 2.dp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(18.dp).semantics { contentDescription = loadingDescription }, strokeWidth = 2.dp)
+                        Text(loadingDescription)
+                    }
                 } else Text(stringResource(R.string.analyze))
             }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive }) }
