@@ -41,6 +41,14 @@ jobs:
         run: chmod +x gradlew
       - name: Run quality gates and assemble APKs
         run: ./gradlew --no-daemon clean check lintDebug testDebugUnitTest assembleDebug assembleRelease
+      - name: Run Android instrumentation smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: Pixel_2
+          script: ./gradlew --no-daemon connectedDebugAndroidTest
       - name: Verify APK outputs and checksums
         shell: bash
         run: |

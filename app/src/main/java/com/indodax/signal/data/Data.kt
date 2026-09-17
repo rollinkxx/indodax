@@ -85,9 +85,12 @@ class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -
     private fun List<CandleRow>.toDomain(now: Long): List<Ohlcv> {
         if (isEmpty()) return emptyList()
         require(zipWithNext().all { it.first.timestamp < it.second.timestamp }) { "Timestamp candle tidak terurut" }
+        require(zipWithNext().all { it.second.timestamp - it.first.timestamp == CANDLE_INTERVAL_SECONDS }) { "Interval candle bukan hourly" }
         require(all { it.timestamp > 0 && it.timestamp <= now }) { "Timestamp candle tidak valid" }
-        require(now - last().timestamp <= MAX_STALE_SECONDS) { "Candle terbaru terlalu lama" }
-        return map { row ->
+        val completed = filter { it.timestamp + CANDLE_INTERVAL_SECONDS <= now }
+        if (completed.isEmpty()) return emptyList()
+        require(now - completed.last().timestamp <= MAX_STALE_SECONDS) { "Candle terbaru terlalu lama" }
+        return completed.map { row ->
             val volume = row.volume.toDoubleOrNull()
             require(volume != null && volume.isFinite()) { "Volume candle tidak valid" }
             require(listOf(row.open, row.high, row.low, row.close).all { it.isFinite() && it > 0 } && volume >= 0) { "Rentang candle tidak valid" }
@@ -99,6 +102,7 @@ class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -
     companion object {
         const val MIN_CANDLES = 60
         const val MAX_CANDLES = 500
+        const val CANDLE_INTERVAL_SECONDS = 60L * 60
         const val MAX_STALE_SECONDS = 60L * 60 * 4
         val TICKER_IDS = mapOf("btc_idr" to "btcidr", "eth_idr" to "ethidr", "xrp_idr" to "xrpidr", "sol_idr" to "solidr", "doge_idr" to "dogeidr")
         val SYMBOLS = mapOf("btc_idr" to "BTCIDR", "eth_idr" to "ETHIDR", "xrp_idr" to "XRPIDR", "sol_idr" to "SOLIDR", "doge_idr" to "DOGEIDR")

@@ -20,7 +20,7 @@ object Indicators {
     fun rsi(values: List<Double>, period: Int = 14): Double {
         require(period > 0) { "RSI period harus positif" }
         require(values.all { it.isFinite() }) { "Nilai RSI harus finite" }
-        if (values.size <= period) return 50.0
+        require(values.size > period) { "Histori RSI belum mencukupi" }
         var gains = 0.0; var losses = 0.0
         for (i in 1..period) { val d = values[i] - values[i - 1]; gains += max(d, 0.0); losses += max(-d, 0.0) }
         var avgGain = gains / period; var avgLoss = losses / period

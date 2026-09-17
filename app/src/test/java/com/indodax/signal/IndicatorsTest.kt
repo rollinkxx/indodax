@@ -22,6 +22,11 @@ class IndicatorsTest {
         assertTrue(Indicators.rsi((0 until 60).map { 200.0 - it }) < 30.0)
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun rsiRejectsInsufficientHistory() {
+        Indicators.rsi(List(14) { 100.0 })
+    }
+
     @Test fun calculateRequiresMinimumHistory() {
         val candles = List(20) { Ohlcv(it.toLong(), 100.0, 101.0, 99.0, 100.0, 10.0) }
         try { Indicators.calculate(candles); error("expected validation failure") } catch (_: IllegalArgumentException) { }
@@ -52,5 +57,10 @@ class IndicatorsTest {
         val snapshot = Snapshot(100.0, 100.0, 50.0, 0.0, 0.0, false, false, 0.0, 0.0)
 
         assertEquals(Signal.HOLD, SignalEngine.evaluate(snapshot).signal)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun signalRejectsContradictoryMacdCrosses() {
+        SignalEngine.evaluate(Snapshot(100.0, 100.0, 50.0, 0.0, 0.0, true, true, 10.0, 10.0))
     }
 }
