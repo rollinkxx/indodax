@@ -35,10 +35,8 @@ jobs:
           test -x "$sdkmanager_path"
           echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
           echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
-          echo "SDKMANAGER=$sdkmanager_path" >> "$GITHUB_ENV"
           yes | "$sdkmanager_path" --licenses >/dev/null || true
-      - name: Install Android SDK packages
-        run: "$SDKMANAGER" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          "$sdkmanager_path" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
       - name: Grant execute permission
         run: chmod +x gradlew
       - name: Run quality gates and assemble APKs
