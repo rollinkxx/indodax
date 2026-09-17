@@ -48,7 +48,10 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
-          script: ./gradlew --no-daemon connectedDebugAndroidTest
+          script: |
+            adb shell settings put global verifier_verify_adb_installs 0
+            adb shell settings put global package_verifier_enable 0
+            ./gradlew --no-daemon connectedDebugAndroidTest
       - name: Verify APK outputs and checksums
         shell: bash
         run: |
