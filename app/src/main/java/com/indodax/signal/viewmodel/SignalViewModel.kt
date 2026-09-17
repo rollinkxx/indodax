@@ -44,7 +44,7 @@ class SignalViewModel(private val repository: MarketRepository = defaultReposito
         activeJob?.cancel()
         val requestPair = _state.value.pair
         val requestGeneration = ++generation
-        _state.update { it.copy(loading = true, error = null, result = null, price = null, resultPair = null, fetchedAt = null) }
+        _state.update { it.copy(loading = true, error = null, result = null, price = null, resultPair = null, fetchedAt = null, dataSource = null) }
         activeJob = viewModelScope.launch {
             try {
                 when (val response = repository.fetch(requestPair)) {
@@ -52,12 +52,12 @@ class SignalViewModel(private val repository: MarketRepository = defaultReposito
                         val signal = SignalEngineHolder.evaluate(response.candles)
                         if (requestGeneration == generation && _state.value.pair == requestPair) _state.update { it.copy(result = signal, price = response.ticker.last?.toDoubleOrNull(), resultPair = requestPair, fetchedAt = response.fetchedAt, dataSource = response.source.name, loading = false, error = null) }
                     }
-                    is MarketResult.Failure -> if (requestGeneration == generation) _state.update { it.copy(loading = false, error = response.message, result = null, price = null, resultPair = null) }
+                    is MarketResult.Failure -> if (requestGeneration == generation) _state.update { it.copy(loading = false, error = response.message, result = null, price = null, resultPair = null, fetchedAt = null, dataSource = null) }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (_: Exception) {
-                if (requestGeneration == generation) _state.update { it.copy(loading = false, error = "Gagal memproses data Indodax", result = null, price = null, resultPair = null) }
+                if (requestGeneration == generation) _state.update { it.copy(loading = false, error = "Gagal memproses data Indodax", result = null, price = null, resultPair = null, fetchedAt = null, dataSource = null) }
             }
         }
     }

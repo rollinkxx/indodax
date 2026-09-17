@@ -35,7 +35,9 @@ object Indicators {
     fun macd(values: List<Double>): MacdSnapshot {
         require(values.all { it.isFinite() }) { "Nilai MACD harus finite" }
         require(values.size >= MACD_MIN_CANDLES) { "Histori MACD belum mencukupi" }
-        val line = ema(values, 12).indices.map { i -> ema(values, 12)[i] - ema(values, 26)[i] }
+        val fast = ema(values, 12)
+        val slow = ema(values, 26)
+        val line = fast.indices.map { i -> fast[i] - slow[i] }
         val signal = ema(line, 9)
         val n = line.lastIndex
         val prev = n - 1

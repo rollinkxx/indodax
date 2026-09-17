@@ -9,6 +9,7 @@
     <string name="confidence">Keyakinan %1$d%%</string>
     <string name="last_price">Harga terakhir: %1$s IDR</string>
     <string name="data_source">Sumber data: %1$s</string>
+    <string name="data_source_history">Indodax OHLC 1 jam</string>
     <string name="disclaimer">Bukan nasihat finansial. Gunakan sebagai informasi tambahan.</string>
     <string name="buy">BUY</string>
     <string name="sell">SELL</string>

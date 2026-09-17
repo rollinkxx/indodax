@@ -9,6 +9,8 @@ object SignalEngine {
     // BUY/SELL require all four specified confirmations; HOLD confidence is always 0.
     fun evaluate(s: Snapshot): SignalResult {
         require(listOf(s.ema20, s.ema50, s.rsi, s.macd, s.macdSignal, s.volume, s.volumeAverage).all { it.isFinite() })
+        require(s.rsi in 0.0..100.0) { "RSI harus berada di antara 0 dan 100" }
+        require(s.volume >= 0.0 && s.volumeAverage > 0.0) { "Volume snapshot tidak valid" }
         val bullish = s.ema20 > s.ema50
         val bearish = s.ema20 < s.ema50
         val volume = s.volume > s.volumeAverage && s.volumeAverage > 0

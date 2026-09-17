@@ -30,7 +30,7 @@ fun MainScreen(vm: SignalViewModel) {
     val pairs = listOf("btc_idr", "eth_idr", "xrp_idr", "sol_idr", "doge_idr")
     var expanded by remember { mutableStateOf(false) }
     val dark = isSystemInDarkTheme()
-    val resultColor = when (state.result?.signal) { Signal.BUY -> Color(0xFF56D364); Signal.SELL -> Color(0xFFFF6B6B); else -> if (dark) Color.LightGray else Color(0xFF68707C) }
+    val resultColor = when (state.result?.signal) { Signal.BUY -> if (dark) Color(0xFF8FE388) else Color(0xFF146C2E); Signal.SELL -> if (dark) Color(0xFFFF9A9A) else Color(0xFFB3261E); else -> if (dark) Color.LightGray else Color(0xFF68707C) }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
@@ -61,7 +61,7 @@ fun MainScreen(vm: SignalViewModel) {
                     Text(stringResource(R.string.confidence, state.result?.confidence ?: 0), fontWeight = FontWeight.SemiBold)
                     Text(stringResource(R.string.last_price, state.price?.let { NumberFormat.getNumberInstance(Locale("id", "ID")).format(it) } ?: "-"))
                     Text(state.result?.reason ?: stringResource(R.string.analyze_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    state.fetchedAt?.let { Text(stringResource(R.string.data_source, state.dataSource ?: "-"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    state.fetchedAt?.let { Text(stringResource(R.string.data_source, stringResource(R.string.data_source_history)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
             OutlinedButton(onClick = vm::analyze, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.refresh)) }
