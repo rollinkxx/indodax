@@ -17,8 +17,7 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # ubuntu-latest includes the Android SDK, platform 34, and build-tools.
       - name: Grant execute permission
         run: chmod +x gradlew
       - name: Build debug and release APKs
