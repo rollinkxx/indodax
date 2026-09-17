@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">IndodaxSignal</string>
+    <string name="subtitle">Sinyal teknikal crypto berbasis OHLC</string>
+    <string name="analyze">Analisa</string>
+    <string name="refresh">Refresh</string>
+    <string name="loading">Sedang menganalisis</string>
+    <string name="not_analyzed">BELUM DIANALISIS</string>
+    <string name="analyze_hint">Tekan Analisa untuk mengambil data dan menghitung sinyal.</string>
+    <string name="confidence">Keyakinan %1$d%%</string>
+    <string name="last_price">Harga terakhir: %1$s IDR</string>
+    <string name="data_source">Sumber data: %1$s</string>
+    <string name="disclaimer">Bukan nasihat finansial. Gunakan sebagai informasi tambahan.</string>
+    <string name="buy">BUY</string>
+    <string name="sell">SELL</string>
+    <string name="hold">HOLD</string>
+</resources>
