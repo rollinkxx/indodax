@@ -3,10 +3,12 @@ package com.indodax.signal
 import com.indodax.signal.data.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class MarketRepositoryTest {
-    private val valid = List(60) { i -> CandleRow(990_000L + i * 3_600L, 100.0, 101.0, 99.0, 100.0, "10") }
+    private val valid = List(60) { i -> CandleRow(784_000L + i * 3_600L, 100.0, 101.0, 99.0, 100.0, "10") }
 
     private val validHourlyHistory = List(180) { i ->
         CandleRow(994_600L - (179 - i) * 3_600L, 100.0, 101.0, 99.0, 100.0, "10")
@@ -23,12 +25,24 @@ class MarketRepositoryTest {
 
     @Test fun tickerUsesCompactPublicPairId() = runTest {
         var requested = ""
+        var requestedSymbol = ""
+        var requestedTimeframe = ""
+        var requestedFrom = 0L
+        var requestedTo = 0L
         val api = object : IndodaxApi {
             override suspend fun ticker(pairId: String): TickerResponse { requested = pairId; return TickerResponse(Ticker(last = "100")) }
-            override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long) = valid
+            override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long): List<CandleRow>? {
+                requestedSymbol = symbol; requestedTimeframe = timeframe; requestedFrom = from; requestedTo = to
+                return valid
+            }
         }
-        MarketRepository(api, { 1_000_000L }).fetch("btc_idr")
+        val result = MarketRepository(api, { 1_000_000L }).fetch(" BTC_IDR ")
         assertEquals("btcidr", requested)
+        assertEquals("BTCIDR", requestedSymbol)
+        assertEquals("60", requestedTimeframe)
+        assertEquals(1_000_000L - 60L * 60 * 180, requestedFrom)
+        assertEquals(1_000_000L, requestedTo)
+        assertTrue(result is MarketResult.Success)
     }
 
     @Test fun futureCandleIsRejected() = runTest {
@@ -109,5 +123,42 @@ class MarketRepositoryTest {
         val result = MarketRepository(api, { 1_000_000L }).fetch("btc_idr")
 
         assertEquals(180, (result as MarketResult.Success).candles.size)
+    }
+
+    @Test fun nullTickerBodyIsMalformed() = runTest {
+        val api = object : IndodaxApi {
+            override suspend fun ticker(pairId: String): TickerResponse? = null
+            override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long) = valid
+        }
+
+        val result = MarketRepository(api, { 1_000_000L }).fetch("btc_idr")
+
+        assertEquals(FailureKind.MALFORMED, (result as MarketResult.Failure).kind)
+    }
+
+    @Test fun nullCandleBodyIsMalformed() = runTest {
+        val api = object : IndodaxApi {
+            override suspend fun ticker(pairId: String) = TickerResponse(Ticker(last = "100"))
+            override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long): List<CandleRow>? = null
+        }
+
+        val result = MarketRepository(api, { 1_000_000L }).fetch("btc_idr")
+
+        assertEquals(FailureKind.MALFORMED, (result as MarketResult.Failure).kind)
+    }
+
+    @Test fun pairNormalizationIsLocaleIndependent() = runTest {
+        val previous = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+            val api = object : IndodaxApi {
+                override suspend fun ticker(pairId: String) = TickerResponse(Ticker(last = "100"))
+                override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long) = valid
+            }
+
+            assertTrue(MarketRepository(api, { 1_000_000L }).fetch(" BTC_IDR ") is MarketResult.Success)
+        } finally {
+            Locale.setDefault(previous)
+        }
     }
 }

@@ -15,8 +15,8 @@ Script memasang atau memastikan tersedia:
 
 - OpenJDK 17;
 - Android SDK command-line tools;
-- Android SDK Platform 34;
-- Android SDK Build-Tools 34.0.0;
+- Android SDK Platform 36;
+- Android SDK Build-Tools 36.0.0;
 - Android Platform-Tools;
 - Android Emulator;
 - `local.properties` yang menunjuk ke SDK lokal.
@@ -35,10 +35,16 @@ source .toolchain.env
 ./gradlew assembleRelease
 ```
 
-Quality gate CI lengkap:
+Quality gate JVM/build lokal:
 
 ```bash
 ./gradlew --no-daemon clean check lintDebug testDebugUnitTest assembleDebug assembleRelease
+```
+
+Quality gate CI lengkap juga menjalankan emulator-backed instrumentation test dan verifikasi checksum sebelum upload artifact:
+
+```bash
+./gradlew --no-daemon connectedDebugAndroidTest
 ```
 
 Untuk menjalankan emulator yang dibuat oleh bootstrap:

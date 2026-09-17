@@ -31,7 +31,7 @@ JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")"
 export JAVA_HOME
 
 yes | sdkmanager --licenses >/dev/null || true
-sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "emulator"
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "emulator"
 
 printf 'sdk.dir=%s\n' "$SDK_ROOT" > "$ROOT_DIR/local.properties"
 cat > "$ROOT_DIR/.toolchain.env" <<EOF

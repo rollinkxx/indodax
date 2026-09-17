@@ -31,6 +31,8 @@ Prevent technically valid but semantically unsafe market data from producing mis
 - MACD cross-up and cross-down cannot both be true in a valid snapshot.
 - RSI input shorter than its required period has an explicit failure contract.
 - Android 12+ data extraction policy explicitly matches the no-backup intent.
+- Android API 24–30 legacy backup policy explicitly excludes application data.
+- Release target and compile SDK are API 36 for the 2026 Play target window.
 - An instrumentation smoke test launches the main activity and verifies the primary UI content.
 - CI runs instrumentation tests before APK verification and upload.
 - No artifact upload occurs if any quality gate fails.

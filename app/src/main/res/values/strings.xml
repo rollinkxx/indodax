@@ -14,4 +14,7 @@
     <string name="buy">BUY</string>
     <string name="sell">SELL</string>
     <string name="hold">HOLD</string>
+    <string name="pair_selector">Pilih pasangan trading</string>
+    <string name="expanded">Terbuka</string>
+    <string name="collapsed">Tertutup</string>
 </resources>

@@ -10,6 +10,7 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.io.IOException
+import java.util.Locale
 
 // DTOs follow the documented public Indodax contracts.
 data class TickerResponse(val ticker: Ticker? = null)
@@ -32,28 +33,31 @@ sealed interface MarketResult {
 enum class FailureKind { NETWORK, TIMEOUT, HTTP, MALFORMED, INSUFFICIENT_DATA }
 
 interface IndodaxApi {
-    @GET("api/ticker/{pair}") suspend fun ticker(@Path("pair") pairId: String): TickerResponse
-    @GET("tradingview/history_v2") suspend fun candles(@Query("symbol") symbol: String, @Query("tf") timeframe: String = "60", @Query("from") from: Long, @Query("to") to: Long): List<CandleRow>
+    @GET("api/ticker/{pair}") suspend fun ticker(@Path("pair") pairId: String): TickerResponse?
+    @GET("tradingview/history_v2") suspend fun candles(@Query("symbol") symbol: String, @Query("tf") timeframe: String = "60", @Query("from") from: Long, @Query("to") to: Long): List<CandleRow>?
 }
 
 class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -> Long = { System.currentTimeMillis() / 1000 }) {
     suspend fun fetch(pair: String): MarketResult {
-        val normalized = pair.lowercase()
+        val normalized = pair.trim().lowercase(Locale.ROOT)
         if (!TICKER_IDS.containsKey(normalized)) return MarketResult.Failure(FailureKind.MALFORMED, "Pasangan tidak didukung")
         return try {
             withTimeout(20_000) {
                 val now = nowSeconds()
                 coroutineScope {
-                    val tickerDeferred = async { withTimeout(15_000) { api.ticker(TICKER_IDS.getValue(normalized)).ticker } }
+                    val tickerDeferred = async { withTimeout(15_000) { api.ticker(TICKER_IDS.getValue(normalized)) } }
                     val candlesDeferred = async {
                         withTimeout(15_000) {
                             api.candles(SYMBOLS.getValue(normalized), "60", now - 60L * 60 * 180, now)
                         }
                     }
-                    val ticker = tickerDeferred.await()
+                    val tickerResponse = tickerDeferred.await()
+                        ?: return@coroutineScope MarketResult.Failure(FailureKind.MALFORMED, "Respons ticker kosong")
+                    val ticker = tickerResponse.ticker
                         ?: return@coroutineScope MarketResult.Failure(FailureKind.MALFORMED, "Ticker kosong")
                     validateTicker(ticker)
                     val rows = candlesDeferred.await()
+                        ?: return@coroutineScope MarketResult.Failure(FailureKind.MALFORMED, "Respons candle kosong")
                     if (rows.size > MAX_CANDLES) {
                         return@coroutineScope MarketResult.Failure(FailureKind.MALFORMED, "Histori candle terlalu besar")
                     }
