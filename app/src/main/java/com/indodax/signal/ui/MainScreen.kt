@@ -71,5 +71,3 @@ fun MainScreen(vm: SignalViewModel) {
 }
 
 private fun pairLabel(pair: String) = pair.uppercase().replace("_", " / ")
-@Composable
-private fun signalLabel(signal: Signal) = when (signal) { Signal.BUY -> stringResource(R.string.buy); Signal.SELL -> stringResource(R.string.sell); Signal.HOLD -> stringResource(R.string.hold) }

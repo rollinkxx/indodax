@@ -8,6 +8,10 @@ import org.junit.Test
 class MarketRepositoryTest {
     private val valid = List(60) { i -> CandleRow(990_000L + i * 60L, 100.0, 101.0, 99.0, 100.0, "10") }
 
+    private val validHourlyHistory = List(180) { i ->
+        CandleRow(1_000_000L - (179 - i) * 3_600L, 100.0, 101.0, 99.0, 100.0, "10")
+    }
+
     @Test fun noDataDoesNotBecomeSyntheticCandles() = runTest {
         val api = object : IndodaxApi {
             override suspend fun ticker(pairId: String) = TickerResponse(Ticker(last = "100"))
@@ -42,6 +46,29 @@ class MarketRepositoryTest {
             override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long) = valid
         }
         val result = MarketRepository(api).fetch("bad_idr")
+        assertEquals(FailureKind.MALFORMED, (result as MarketResult.Failure).kind)
+    }
+
+    @Test fun historicalCandlesMayBeOlderThanFreshnessWindowWhenLatestIsFresh() = runTest {
+        val api = object : IndodaxApi {
+            override suspend fun ticker(pairId: String) = TickerResponse(Ticker(last = "100"))
+            override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long) = validHourlyHistory
+        }
+
+        val result = MarketRepository(api, { 1_000_000L }).fetch("btc_idr")
+
+        assertEquals(180, (result as MarketResult.Success).candles.size)
+    }
+
+    @Test fun staleLatestCandleIsRejectedEvenWhenHistoryIsComplete() = runTest {
+        val staleHistory = validHourlyHistory.map { it.copy(timestamp = it.timestamp - 5 * 3_600L) }
+        val api = object : IndodaxApi {
+            override suspend fun ticker(pairId: String) = TickerResponse(Ticker(last = "100"))
+            override suspend fun candles(symbol: String, timeframe: String, from: Long, to: Long) = staleHistory
+        }
+
+        val result = MarketRepository(api, { 1_000_000L }).fetch("btc_idr")
+
         assertEquals(FailureKind.MALFORMED, (result as MarketResult.Failure).kind)
     }
 }

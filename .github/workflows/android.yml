@@ -26,6 +26,10 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
       - name: Grant execute permission
         run: chmod +x gradlew
       - name: Run quality gates and assemble APKs

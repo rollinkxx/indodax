@@ -6,7 +6,7 @@
     <string name="loading">Sedang menganalisis</string>
     <string name="not_analyzed">BELUM DIANALISIS</string>
     <string name="analyze_hint">Tekan Analisa untuk mengambil data dan menghitung sinyal.</string>
-    <string name="confidence">Keyakinan %1$d%%</string>
+    <string name="confidence">Skor konfirmasi %1$d%%</string>
     <string name="last_price">Harga terakhir: %1$s IDR</string>
     <string name="data_source">Sumber data: %1$s</string>
     <string name="data_source_history">Indodax OHLC 1 jam</string>

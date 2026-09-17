@@ -2,6 +2,8 @@ package com.indodax.signal.data
 
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeout
 import retrofit2.HttpException
 import retrofit2.http.GET
@@ -39,14 +41,27 @@ class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -
         val normalized = pair.lowercase()
         if (!TICKER_IDS.containsKey(normalized)) return MarketResult.Failure(FailureKind.MALFORMED, "Pasangan tidak didukung")
         return try {
-            val now = nowSeconds()
-            val ticker = withTimeout(15_000) { api.ticker(TICKER_IDS.getValue(normalized)).ticker }
-                ?: return MarketResult.Failure(FailureKind.MALFORMED, "Ticker kosong")
-            validateTicker(ticker)
-            val rows = withTimeout(15_000) { api.candles(SYMBOLS.getValue(normalized), "60", now - 60L * 60 * 180, now) }
-            val candles = rows.toDomain(now)
-            if (candles.size < MIN_CANDLES) MarketResult.Failure(FailureKind.INSUFFICIENT_DATA, "Histori candle belum mencukupi")
-            else MarketResult.Success(candles, ticker, now, DataSource.INDODAX_HISTORY_V2)
+            withTimeout(20_000) {
+                val now = nowSeconds()
+                coroutineScope {
+                    val tickerDeferred = async { withTimeout(15_000) { api.ticker(TICKER_IDS.getValue(normalized)).ticker } }
+                    val candlesDeferred = async {
+                        withTimeout(15_000) {
+                            api.candles(SYMBOLS.getValue(normalized), "60", now - 60L * 60 * 180, now)
+                        }
+                    }
+                    val ticker = tickerDeferred.await()
+                        ?: return@coroutineScope MarketResult.Failure(FailureKind.MALFORMED, "Ticker kosong")
+                    validateTicker(ticker)
+                    val rows = candlesDeferred.await()
+                    if (rows.size > MAX_CANDLES) {
+                        return@coroutineScope MarketResult.Failure(FailureKind.MALFORMED, "Histori candle terlalu besar")
+                    }
+                    val candles = rows.toDomain(now)
+                    if (candles.size < MIN_CANDLES) MarketResult.Failure(FailureKind.INSUFFICIENT_DATA, "Histori candle belum mencukupi")
+                    else MarketResult.Success(candles, ticker, now, DataSource.INDODAX_HISTORY_V2)
+                }
+            }
         } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
             MarketResult.Failure(FailureKind.TIMEOUT, "Permintaan terlalu lama")
         } catch (e: CancellationException) {
@@ -70,7 +85,8 @@ class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -
     private fun List<CandleRow>.toDomain(now: Long): List<Ohlcv> {
         if (isEmpty()) return emptyList()
         require(zipWithNext().all { it.first.timestamp < it.second.timestamp }) { "Timestamp candle tidak terurut" }
-        require(all { it.timestamp > 0 && it.timestamp <= now && now - it.timestamp <= MAX_STALE_SECONDS }) { "Timestamp candle tidak valid atau stale" }
+        require(all { it.timestamp > 0 && it.timestamp <= now }) { "Timestamp candle tidak valid" }
+        require(now - last().timestamp <= MAX_STALE_SECONDS) { "Candle terbaru terlalu lama" }
         return map { row ->
             val volume = row.volume.toDoubleOrNull()
             require(volume != null && volume.isFinite()) { "Volume candle tidak valid" }
@@ -82,6 +98,7 @@ class MarketRepository(private val api: IndodaxApi, private val nowSeconds: () -
 
     companion object {
         const val MIN_CANDLES = 60
+        const val MAX_CANDLES = 500
         const val MAX_STALE_SECONDS = 60L * 60 * 4
         val TICKER_IDS = mapOf("btc_idr" to "btcidr", "eth_idr" to "ethidr", "xrp_idr" to "xrpidr", "sol_idr" to "solidr", "doge_idr" to "dogeidr")
         val SYMBOLS = mapOf("btc_idr" to "BTCIDR", "eth_idr" to "ETHIDR", "xrp_idr" to "XRPIDR", "sol_idr" to "SOLIDR", "doge_idr" to "DOGEIDR")
